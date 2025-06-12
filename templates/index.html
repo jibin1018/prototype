@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 인재 검색 어시스턴트 Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bot-avatar {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .header-info h1 {
+            font-size: 1.6em;
+            margin-bottom: 5px;
+        }
+
+        .header-info p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .message-content {
+            max-width: 75%;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #1f2937;
+        }
+
+        .message-time {
+            font-size: 0.75em;
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .feedback-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 15px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .feedback-btn:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .feedback-btn.positive {
+            background: #dcfce7;
+            border-color: #10b981;
+            color: #059669;
+        }
+
+        .feedback-btn.negative {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        .recommendation-cards {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, #f0f9ff, #ecfdf5);
+            border: 1px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.1);
+        }
+
+        .recommendation-card.highlighted {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+        }
+
+        .recommendation-card.dimmed {
+            opacity: 0.6;
+            background: #f1f5f9;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .candidate-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1em;
+        }
+
+        .candidate-number {
+            background: #6366f1;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 50%;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .match-score {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .card-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .detail-item {
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .card-recommendation {
+            background: rgba(79, 70, 229, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #4f46e5;
+            margin-top: 10px;
+        }
+
+        .enhanced-details {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
+
+        .enhanced-details h4 {
+            color: #059669;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .enhanced-details ul {
+            list-style: none;
+            font-size: 0.85em;
+            color: #374151;
+        }
+
+        .enhanced-details li {
+            margin: 4px 0;
+        }
+
+        .skills-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .skill-tag {
+            background: #ede9fe;
+            color: #6d28d9;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .feedback-understanding {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .feedback-understanding h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-changes {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .weight-change-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0;
+            font-size: 0.85em;
+        }
+
+        .weight-increase {
+            color: #059669;
+        }
+
+        .weight-decrease {
+            color: #dc2626;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .quick-action {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .chat-input {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .send-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .session-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .welcome-message h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .example-queries {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .example-query {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .example-query:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .insights-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px;
+            transform: translateX(320px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .insights-panel.open {
+            transform: translateX(0);
+        }
+
+        .insights-toggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            z-index: 1001;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                height: 95vh;
+                border-radius: 15px;
+            }
+            
+            .chat-header {
+                padding: 15px 20px;
+            }
+            
+            .chat-messages {
+                padding: 15px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .recommendation-card {
+                padding: 15px;
+            }
+            
+            .card-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-input {
+                padding: 15px 20px;
+            }
+
+            .insights-panel {
+                width: 280px;
+                right: 10px;
+                top: 10px;
+            }
+
+            .insights-toggle {
+                right: 10px;
+                top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div class="header-info">
+                <h1>AI 인재 검색 어시스턴트 Pro</h1>
+                <p>피드백을 통해 더 정확한 추천을 받아보세요</p>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="statusText">온라인</span>
+            </div>
+        </div>
+
+        <div class="session-info" id="sessionInfo">
+            세션 준비 중...
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h2>👋 향상된 AI 어시스턴트에 오신 것을 환영합니다!</h2>
+                <p>찾고 계신 인재를 자연스럽게 말씀해 주시면, 최적의 후보를 찾아드린 후<br>
+                여러분의 피드백을 통해 더욱 정확한 추천을 제공해드릴게요.</p>
+                
+                <div class="example-queries">
+                    <div class="example-query" data-query="30대 서울 거주 네트워크 엔지니어 5년 이상 경력">30대 서울 NE 5년+</div>
+                    <div class="example-query" data-query="금융권 DBA 전문가 고급 인재">금융 DBA 고급</div>
+                    <div class="example-query" data-query="보안 전문가 침해대응 경험자">보안 전문가</div>
+                    <div class="example-query" data-query="클라우드 네트워크 엔지니어 AWS 전문">클라우드 NE</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <input type="text" class="input-field" id="messageInput" 
+                       placeholder="예: 30대 서울 거주 금융권 네트워크 엔지니어 찾아줘">
+                <button class="send-button" id="sendButton">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="insights-toggle" id="insightsToggle">💡 인사이트</button>
+    
+    <div class="insights-panel" id="insightsPanel">
+        <h3>🔍 대화 인사이트</h3>
+        <div id="insightsContent">
+            <p>대화가 시작되면 인사이트를 표시합니다.</p>
+        </div>
+    </div>
+
+    <script>
+        class EnhancedTalentChatbot {
+            constructor() {
+                this.init();
+                this.bindEvents();
+                this.checkSystemStatus();
+                this.sessionId = null;
+                this.currentResults = [];
+                this.conversationCount = 0;
+            }
+
+            init() {
+                this.messagesContainer = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.statusText = document.getElementById('statusText');
+                this.sessionInfo = document.getElementById('sessionInfo');
+                this.insightsPanel = document.getElementById('insightsPanel');
+                this.insightsToggle = document.getElementById('insightsToggle');
+                this.insightsContent = document.getElementById('insightsContent');
+                this.isWaitingResponse = false;
+            }
+
+            bindEvents() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // 예시 쿼리 클릭
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('example-query')) {
+                        this.messageInput.value = e.target.dataset.query;
+                        this.sendMessage();
+                    }
+                });
+
+                // 빠른 액션 클릭
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('quick-action')) {
+                        this.messageInput.value = e.target.textContent;
+                        this.sendMessage();
+                    }
+                });
+
+                // 피드백 버튼 클릭
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('feedback-btn')) {
+                        this.handleFeedbackClick(e.target);
+                    }
+                });
+
+                // 인사이트 패널 토글
+                this.insightsToggle.addEventListener('click', () => {
+                    this.toggleInsightsPanel();
+                });
+            }
+
+            async checkSystemStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    const data = await response.json();
+                    
+                    if (data.system_status === 'active') {
+                        this.statusText.textContent = '온라인';
+                        this.updateSessionInfo('시스템 준비 완료');
+                    } else {
+                        this.statusText.textContent = '오프라인';
+                        this.updateSessionInfo('시스템 오류');
+                    }
+                } catch (error) {
+                    this.statusText.textContent = '연결 오류';
+                    this.updateSessionInfo('연결 실패');
+                    console.error('Status check failed:', error);
+                }
+            }
+
+            updateSessionInfo(message) {
+                if (this.sessionId) {
+                    this.sessionInfo.textContent = `세션: ${this.sessionId.slice(-8)} | ${message}`;
+                } else {
+                    this.sessionInfo.textContent = message;
+                }
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                
+                if (!message || this.isWaitingResponse) {
+                    return;
+                }
+
+                // 사용자 메시지 추가
+                this.addMessage('user', message);
+                this.messageInput.value = '';
+                this.isWaitingResponse = true;
+                this.updateSendButton(true);
+
+                // 타이핑 인디케이터 표시
+                this.showTypingIndicator();
+
+                try {
+                    const endpoint = '/api/search';
+                    const payload = { 
+                        query: message,
+                        session_id: this.sessionId
+                    };
+
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    
+                    this.hideTypingIndicator();
+
+                    if (data.success) {
+                        this.handleSearchResponse(data);
+                    } else {
+                        this.addMessage('bot', `😅 죄송해요. 검색 중 문제가 발생했어요: ${data.error}`);
+                    }
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    this.addMessage('bot', '😞 서버와 연결에 문제가 있어요. 잠시 후 다시 시도해주세요.');
+                    console.error('Search failed:', error);
+                } finally {
+                    this.isWaitingResponse = false;
+                    this.updateSendButton(false);
+                }
+            }
+
+            async sendFeedback(feedbackText) {
+                if (!this.sessionId || !feedbackText) {
+                    return;
+                }
+
+                this.isWaitingResponse = true;
+                this.updateSendButton(true);
+                this.showTypingIndicator();
+
+                try {
+                    const response = await fetch('/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            feedback: feedbackText,
+                            session_id: this.sessionId,
+                            previous_results: this.currentResults
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    this.hideTypingIndicator();
+
+                    if (data.success) {
+                        this.handleFeedbackResponse(data);
+                    } else {
+                        this.addMessage('bot', `😅 피드백 처리 중 문제가 발생했어요: ${data.error}`);
+                    }
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    this.addMessage('bot', '😞 피드백 처리에 실패했어요. 다시 시도해주세요.');
+                    console.error('Feedback failed:', error);
+                } finally {
+                    this.isWaitingResponse = false;
+                    this.updateSendButton(false);
+                }
+            }
+
+            handleSearchResponse(data) {
+                // 세션 ID 저장
+                if (data.session_id) {
+                    this.sessionId = data.session_id;
+                    this.updateSessionInfo(`대화 ${data.session_info?.conversation_length || 1}`);
+                }
+
+                // 현재 결과 저장
+                this.currentResults = data.recommendations || [];
+
+                // 챗봇 응답 표시
+                if (data.chatbot_response) {
+                    this.displayChatbotResponse(data.chatbot_response);
+                }
+
+                // 대화 횟수 증가 및 인사이트 업데이트
+                this.conversationCount++;
+                if (this.conversationCount > 1) {
+                    this.updateInsights();
+                }
+            }
+
+            handleFeedbackResponse(data) {
+                // 피드백 이해 메시지 표시
+                if (data.feedback_summary) {
+                    this.displayFeedbackUnderstanding(data.feedback_summary);
+                }
+
+                // 가중치 변화 표시
+                if (data.weight_adjustments && Object.keys(data.weight_adjustments).length > 0) {
+                    setTimeout(() => {
+                        this.displayWeightChanges(data.weight_adjustments);
+                    }, 1000);
+                }
+
+                // 새로운 검색 결과 표시
+                if (data.chatbot_response) {
+                    setTimeout(() => {
+                        this.displayChatbotResponse(data.chatbot_response);
+                    }, 2000);
+                }
+
+                // 현재 결과 업데이트
+                this.currentResults = data.recommendations || [];
+                this.updateSessionInfo(`대화 ${data.session_info?.conversation_length || 1}`);
+                this.updateInsights();
+            }
+
+            displayChatbotResponse(chatbotData) {
+                const responseType = chatbotData.response_type;
+                
+                // 메인 메시지 표시
+                this.addMessage('bot', chatbotData.message);
+
+                // 요약 메시지가 있으면 표시
+                if (chatbotData.summary) {
+                    setTimeout(() => {
+                        this.addMessage('bot', chatbotData.summary);
+                    }, 1000);
+                }
+
+                // 추천 결과 표시
+                if (chatbotData.recommendations && chatbotData.recommendations.length > 0) {
+                    setTimeout(() => {
+                        this.displayRecommendations(chatbotData.recommendations);
+                    }, 2000);
+                }
+
+                // 제안사항 표시
+                if (chatbotData.suggestions && chatbotData.suggestions.length > 0) {
+                    setTimeout(() => {
+                        this.displaySuggestions(chatbotData.suggestions);
+                    }, 3000);
+                }
+
+                // 빠른 액션 표시
+                if (chatbotData.next_actions && chatbotData.next_actions.length > 0) {
+                    setTimeout(() => {
+                        this.displayQuickActions(chatbotData.next_actions);
+                    }, 4000);
+                }
+            }
+
+            displayFeedbackUnderstanding(feedbackData) {
+                const understandingHtml = `
+                    <div class="feedback-understanding">
+                        <h4>🤖 피드백 이해 결과</h4>
+                        ${feedbackData.understanding ? feedbackData.understanding.map(item => `<p>✓ ${item}</p>`).join('') : ''}
+                        ${feedbackData.adjustments ? feedbackData.adjustments.map(item => `<p>⚙️ ${item}</p>`).join('') : ''}
+                        <p style="margin-top: 10px; font-style: italic;">${feedbackData.next_search || '조정된 조건으로 검색 중...'}</p>
+                    </div>
+                `;
+                
+                this.addMessage('bot', understandingHtml, true);
+            }
+
+            displayWeightChanges(weightChanges) {
+                const changesHtml = Object.entries(weightChanges).map(([field, change]) => {
+                    const colorClass = change.change_percent > 0 ? 'weight-increase' : 'weight-decrease';
+                    const icon = change.change_percent > 0 ? '↗️' : '↘️';
+                    
+                    return `
+                        <div class="weight-change-item">
+                            <span>${this.translateFieldName(field)}</span>
+                            <span class="${colorClass}">${icon} ${Math.abs(change.change_percent)}%</span>
+                        </div>
+                    `;
+                }).join('');
+
+                const messageContent = `
+                    <div class="weight-changes">
+                        <h4>⚖️ 검색 조건 가중치 조정</h4>
+                        ${changesHtml}
+                    </div>
+                `;
+                
+                this.addMessage('bot', messageContent, true);
+            }
+
+            translateFieldName(field) {
+                const translations = {
+                    'age': '나이',
+                    'residence': '거주지',
+                    'industry_domain': '산업분야',
+                    'specialization': '전문분야',
+                    'experience_years': '경력년수',
+                    'talent_level': '인재등급',
+                    'skills': '기술스택'
+                };
+                return translations[field] || field;
+            }
+
+            displayRecommendations(recommendations) {
+                const recommendationsHtml = recommendations.map((talent, index) => 
+                    this.createEnhancedRecommendationCard(talent, index + 1)
+                ).join('');
+                
+                const messageContent = `
+                    <div class="recommendation-cards">
+                        ${recommendationsHtml}
+                    </div>
+                    <div class="feedback-buttons">
+                        <div class="feedback-btn" data-feedback="너무 좋아요! 더 찾아주세요">👍 더 찾아주세요</div>
+                        <div class="feedback-btn" data-feedback="일부는 좋지만 다른 조건도 고려해주세요">🤔 조건 조정</div>
+                        <div class="feedback-btn" data-feedback="다른 방향으로 찾아주세요">🔄 다른 방향</div>
+                    </div>
+                `;
+                
+                this.addMessage('bot', messageContent, true);
+            }
+
+            createEnhancedRecommendationCard(talent, rank) {
+                const skills = talent.skills || [];
+                const skillTags = skills.slice(0, 4).map(skill => 
+                    `<span class="skill-tag">${skill}</span>`
+                ).join('');
+
+                const strengths = talent.strengths || [];
+                const strengthsList = strengths.slice(0, 3).map(strength =>
+                    `<li>✅ ${strength}</li>`
+                ).join('');
+
+                return `
+                    <div class="recommendation-card" data-candidate="${rank}">
+                        <div class="card-header">
+                            <div style="display: flex; align-items: center;">
+                                <span class="candidate-number">${rank}</span>
+                                <span class="candidate-name">${talent.name || '인재 ' + rank}</span>
+                            </div>
+                            <div class="match-score">${talent.score || 95}%</div>
+                        </div>
+                        
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <span class="detail-value">${talent.age || '30'}세</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value">${talent.residence || '서울'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value">${talent.experience || '5년'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value">${talent.specialization || '일반'}</span>
+                            </div>
+                        </div>
+
+                        ${skillTags ? `<div class="skills-tags">${skillTags}</div>` : ''}
+                        
+                        <div class="card-recommendation">
+                            ${talent.recommendation || '해당 분야의 전문성을 보유한 우수한 인재입니다.'}
+                        </div>
+
+                        ${strengthsList ? `
+                            <div class="enhanced-details">
+                                <h4>주요 강점</h4>
+                                <ul>${strengthsList}</ul>
+                            </div>
+                        ` : ''}
+
+                        ${talent.conditional_note ? `
+                            <div style="margin-top: 10px; padding: 8px; background: #fef3c7; border-radius: 6px; font-size: 0.85em; color: #92400e;">
+                                ${talent.conditional_note}
+                            </div>
+                        ` : ''}
+
+                        <div class="feedback-buttons" style="margin-top: 12px;">
+                            <div class="feedback-btn positive" data-feedback="${rank}번 인재가 마음에 들어요">👍 좋아요</div>
+                            <div class="feedback-btn negative" data-feedback="${rank}번 인재는 별로에요">👎 별로에요</div>
+                            <div class="feedback-btn" data-feedback="${rank}번과 비슷한 인재 더 찾아주세요">🔍 유사한 인재</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            handleFeedbackClick(button) {
+                const feedbackText = button.dataset.feedback;
+                if (feedbackText) {
+                    // 피드백 버튼을 비활성화하여 중복 클릭 방지
+                    button.style.opacity = '0.5';
+                    button.style.pointerEvents = 'none';
+                    
+                    // 사용자 메시지로 표시
+                    this.addMessage('user', feedbackText);
+                    
+                    // 피드백 전송
+                    this.sendFeedback(feedbackText);
+                    
+                    // 카드 하이라이팅 업데이트
+                    this.updateCardHighlighting(feedbackText);
+                }
+            }
+
+            updateCardHighlighting(feedbackText) {
+                const cards = document.querySelectorAll('.recommendation-card');
+                
+                cards.forEach(card => {
+                    const candidateNum = card.dataset.candidate;
+                    
+                    if (feedbackText.includes(`${candidateNum}번`) && feedbackText.includes('좋')) {
+                        card.classList.add('highlighted');
+                        card.classList.remove('dimmed');
+                    } else if (feedbackText.includes(`${candidateNum}번`) && feedbackText.includes('별로')) {
+                        card.classList.add('dimmed');
+                        card.classList.remove('highlighted');
+                    }
+                });
+            }
+
+            displaySuggestions(suggestions) {
+                const suggestionsHtml = suggestions.map(suggestion => 
+                    `<li>${suggestion}</li>`
+                ).join('');
+
+                const messageContent = `
+                    <div style="margin-top: 10px;">
+                        <strong style="color: #f97316;">💡 제안사항:</strong>
+                        <ul class="suggestions-list">
+                            ${suggestionsHtml}
+                        </ul>
+                    </div>
+                `;
+                
+                this.addMessage('bot', messageContent, true);
+            }
+
+            displayQuickActions(actions) {
+                const actionsHtml = actions.map(action => 
+                    `<div class="quick-action">${action}</div>`
+                ).join('');
+
+                const messageContent = `
+                    <div style="margin-top: 15px;">
+                        <strong style="color: #4f46e5; margin-bottom: 10px; display: block;">🚀 다음 단계:</strong>
+                        <div class="quick-actions">
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                `;
+                
+                this.addMessage('bot', messageContent, true);
+            }
+
+            toggleInsightsPanel() {
+                this.insightsPanel.classList.toggle('open');
+                if (this.insightsPanel.classList.contains('open')) {
+                    this.updateInsights();
+                }
+            }
+
+            async updateInsights() {
+                if (!this.sessionId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/insights/${this.sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.displayInsights(data.insights);
+                    }
+                } catch (error) {
+                    console.error('Insights update failed:', error);
+                }
+            }
+
+            displayInsights(insights) {
+                const insightsHtml = `
+                    <div style="font-size: 0.9em;">
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="color: #4f46e5; margin-bottom: 8px;">📊 대화 통계</h4>
+                            <p>총 상호작용: ${insights.total_interactions || 0}회</p>
+                            <p>검색 조정: ${insights.search_refinements || 0}회</p>
+                            <p>세션 시간: ${Math.round(insights.session_duration || 0)}분</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="color: #059669; margin-bottom: 8px;">🎯 학습된 선호도</h4>
+                            <p>선호도 패턴: ${insights.preferences_learned || 0}개</p>
+                        </div>
+                        
+                        <div>
+                            <h4 style="color: #dc2626; margin-bottom: 8px;">💡 개선 제안</h4>
+                            <p style="font-size: 0.8em; color: #6b7280;">
+                                더 많은 피드백을 주시면 더 정확한 추천을 제공할 수 있어요!
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                this.insightsContent.innerHTML = insightsHtml;
+            }
+
+            addMessage(sender, content, isHtml = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = sender === 'bot' ? '🤖' : '👤';
+                const time = new Date().toLocaleTimeString('ko-KR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-content">
+                        ${isHtml ? content : this.escapeHtml(content)}
+                        <div class="message-time">${time}</div>
+                    </div>
+                `;
+
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+
+                // 메시지 애니메이션
+                setTimeout(() => {
+                    messageDiv.style.opacity = '0';
+                    messageDiv.style.transform = 'translateY(20px)';
+                    messageDiv.style.transition = 'all 0.3s ease';
+                    
+                    requestAnimationFrame(() => {
+                        messageDiv.style.opacity = '1';
+                        messageDiv.style.transform = 'translateY(0)';
+                    });
+                }, 10);
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message bot typing-message';
+                typingDiv.innerHTML = `
+                    <div class="message-avatar">🤖</div>
+                    <div class="typing-indicator">
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                `;
+
+                this.messagesContainer.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                const typingMessage = this.messagesContainer.querySelector('.typing-message');
+                if (typingMessage) {
+                    typingMessage.remove();
+                }
+            }
+
+            updateSendButton(isLoading) {
+                this.sendButton.disabled = isLoading;
+                this.sendButton.innerHTML = isLoading ? '⏳' : '➤';
+            }
+
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // 앱 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new EnhancedTalentChatbot();
+        });
+    </script>
+</body>
+</html>
